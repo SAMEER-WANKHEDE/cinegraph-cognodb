@@ -14,8 +14,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.setGlobalPrefix('');
 
-  const port = config.get<number>('PORT', 4000);
-  await app.listen(port);
+  const port = process.env.PORT || 4000;
+  await app.listen(port, '0.0.0.0');
 
   console.log(`CineGraph API running on http://localhost:${port}`);
 }
