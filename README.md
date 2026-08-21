@@ -1,146 +1,205 @@
 CineGraph — CognoDB Graph Database Application
-===============================================
 
-CineGraph is a movie discovery application built for the Wexa AI CognoDB take-home assignment.
+CineGraph is a movie discovery and relationship exploration application built for the Wexa AI CognoDB Take-Home Assignment.
 
-It demonstrates:
+The application demonstrates how a graph database can be used to model and explore relationships between movies, actors, directors, genres and studios.
 
-- A graph data model with Movie, Actor, Director, Genre and Studio nodes
-- Typed relationships and node properties
-- Realistic seed data loaded with a script
-- Parameterised Cypher queries using the official Neo4j JavaScript driver
-- Multi-hop graph traversals
+
+==================================================
+FEATURES
+==================================================
+
+- Movie catalogue with ratings, release year and duration
+- Movie poster images
+- Movie detail pages
+- Search for movies, actors and directors
+- Actor relationships
+- Director relationships
+- Genre relationships
+- Studio relationships
 - Graph-based movie recommendations
-- Movie search
-- Movie relationship exploration
-- Poster images for movie listings and movie details
+- Multi-hop graph traversal
 - Loading, empty and error states
-- Environment-based database credentials
+- Responsive user interface
+- Environment-based database configuration
+- Parameterised Cypher queries
+- Graceful database error handling
 
 
-ARCHITECTURE
-============
-
-Next.js + Tailwind
-        |
-        | REST API
-        v
-NestJS Backend
-        |
-        | Official Neo4j JavaScript Driver
-        v
-CognoDB (Bolt / openCypher)
-
-
-GRAPH MODEL
-===========
-
-(Actor)-[:ACTED_IN]->(Movie)<-[:DIRECTED]-(Director)
-                         |
-                         +--[:HAS_GENRE]--> (Genre)
-                         |
-                         +--[:PRODUCED_BY]--> (Studio)
-
-
+==================================================
 WHY A GRAPH DATABASE?
-=====================
+==================================================
 
-The interesting part of a movie catalogue is not only the movie itself;
-it is the network around it.
+A movie application is naturally relationship-heavy.
 
-A movie can connect to:
+A movie can have:
 
-- Actors
-- Director
-- Genres
-- Studio
+- Multiple actors
+- A director
+- Multiple genres
+- A production studio
 
-Actors and other entities can then connect the movie to other movies.
+At the same time, an actor can appear in many movies, a director can direct multiple movies, and movies can share multiple genres.
 
-A relational database can represent the same information, but
-relationship-heavy questions require multiple joins across junction tables.
+A relational database can represent this information using multiple tables and junction tables. However, queries involving several relationships require repeated joins.
 
-In CineGraph, these questions are expressed naturally as graph traversals.
+In CineGraph, these relationships can be explored naturally using graph traversals.
 
 For example:
 
 Movie -> Actor -> Movie
 
-or:
+This allows the application to find other movies that share actors with the selected movie.
+
+The application also supports more complex traversals such as:
 
 Movie -> Actor -> Movie -> Genre
 
-This makes relationship exploration and graph-based recommendations
-a central feature of the application.
+This makes relationship-based movie discovery the central part of the application rather than simply filtering rows by individual movie properties.
+
+The graph database therefore provides a natural way to represent and query the connected movie ecosystem.
 
 
-GRAPH RELATIONSHIPS
-===================
+==================================================
+ARCHITECTURE
+==================================================
 
-Movie
-  |
-  +-- DIRECTED BY --> Director
-  |
-  +-- PRODUCED BY --> Studio
-  |
-  +-- HAS GENRE --> Genre
-  |
-  +-- ACTED IN <-- Actor
-
-
-MAIN GRAPH QUERIES
-==================
-
-Find a movie:
-
-MATCH (m:Movie {id: $movieId})
-RETURN m
-
-
-Find actors in a movie:
-
-MATCH (m:Movie {id: $movieId})<-[:ACTED_IN]-(a:Actor)
-RETURN a
-ORDER BY a.name
+                         +----------------------+
+                         |      Next.js UI      |
+                         |   React + Tailwind   |
+                         +----------+-----------+
+                                    |
+                                    | REST API
+                                    v
+                         +----------------------+
+                         |    NestJS Backend    |
+                         | Controllers/Services |
+                         +----------+-----------+
+                                    |
+                                    | Neo4j Driver
+                                    | Bolt / openCypher
+                                    v
+                         +----------------------+
+                         |       CognoDB        |
+                         |    Graph Database    |
+                         +----------------------+
 
 
-Multi-hop recommendations through shared actors:
+==================================================
+GRAPH DATA MODEL
+==================================================
 
-MATCH (m:Movie {id: $movieId})
-      <-[:ACTED_IN]-(a:Actor)
-      -[:ACTED_IN]->(related:Movie)
+CineGraph uses five main node types:
 
-WHERE m <> related
+- Movie
+- Actor
+- Director
+- Genre
+- Studio
 
-RETURN related,
-       COUNT(DISTINCT a) AS sharedActors
+Relationships:
 
-ORDER BY sharedActors DESC
+Actor      -[ACTED_IN]->      Movie
 
-LIMIT 10
+Director   -[DIRECTED]->      Movie
 
+Movie      -[HAS_GENRE]->     Genre
 
-Multi-hop recommendations through actors and genres:
-
-MATCH (m:Movie {id: $movieId})
-      <-[:ACTED_IN]-(a:Actor)
-      -[:ACTED_IN]->(related:Movie)
-      -[:HAS_GENRE]->(g:Genre)
-      <-[:HAS_GENRE]-(m)
-
-WHERE m <> related
-
-RETURN related,
-       COUNT(DISTINCT a) AS sharedActors,
-       COUNT(DISTINCT g) AS sharedGenres
-
-ORDER BY sharedActors DESC, sharedGenres DESC
-
-LIMIT 10
+Movie      -[PRODUCED_BY]->   Studio
 
 
+Overall graph:
+
+                         Actor
+                           |
+                        ACTED_IN
+                           |
+                           v
+Director ----DIRECTED--> Movie ----HAS_GENRE----> Genre
+                           |
+                           |
+                      PRODUCED_BY
+                           |
+                           v
+                         Studio
+
+
+Example:
+
+Christopher Nolan
+        |
+     DIRECTED
+        |
+        v
+     Inception
+      /  |  \
+     /   |   \
+  Actor Genre Studio
+
+
+==================================================
+DATA MODEL
+==================================================
+
+Movie properties:
+
+- id
+- title
+- releaseYear
+- rating
+- duration
+- description
+- posterUrl
+
+Actor properties:
+
+- id
+- name
+
+Director properties:
+
+- id
+- name
+
+Genre properties:
+
+- id
+- name
+
+Studio properties:
+
+- id
+- name
+
+
+==================================================
+TECHNOLOGY STACK
+==================================================
+
+Frontend:
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+
+Backend:
+
+- NestJS
+- TypeScript
+- REST API
+
+Database:
+
+- CognoDB
+- openCypher
+- Bolt protocol
+- Official Neo4j JavaScript driver
+
+
+==================================================
 PROJECT STRUCTURE
-=================
+==================================================
 
 cinegraph-cognodb/
 
@@ -148,20 +207,26 @@ cinegraph-cognodb/
 │   ├── src/
 │   │   ├── app.module.ts
 │   │   ├── main.ts
+│   │   │
 │   │   ├── database/
 │   │   │   ├── database.module.ts
 │   │   │   └── neo4j.service.ts
+│   │   │
 │   │   ├── movies/
 │   │   │   ├── movies.controller.ts
 │   │   │   ├── movies.service.ts
 │   │   │   └── movies.module.ts
+│   │   │
 │   │   └── health/
 │   │       ├── health.controller.ts
 │   │       └── health.module.ts
+│   │
 │   ├── seed/
 │   │   └── seed.ts
+│   │
 │   ├── queries/
 │   │   └── recommendations.cypher
+│   │
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── nest-cli.json
@@ -172,18 +237,23 @@ cinegraph-cognodb/
 │   │   ├── movies/
 │   │   │   └── [id]/
 │   │   │       └── page.tsx
+│   │   │
 │   │   ├── search/
 │   │   │   └── page.tsx
+│   │   │
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
+│   │
 │   ├── components/
 │   │   ├── MovieCard.tsx
 │   │   ├── MoviePoster.tsx
 │   │   ├── SearchBar.tsx
 │   │   └── LoadingState.tsx
+│   │
 │   ├── lib/
 │   │   └── api.ts
+│   │
 │   ├── package.json
 │   ├── next.config.ts
 │   ├── tsconfig.json
@@ -194,23 +264,32 @@ cinegraph-cognodb/
 └── setup.md
 
 
-1. CREATE COGNODB
-=================
+==================================================
+COGNODB SETUP
+==================================================
 
-Create a CognoDB Cloud instance from the CognoDB console.
+Create a free CognoDB Cloud instance from:
 
-Save the following:
+https://console.cognodb.com/
+
+The free tier does not require a credit card.
+
+After creating the instance, save:
 
 - Bolt URI
 - Username
 - Generated password
 
-The password should be stored securely and must NOT be committed
-to GitHub.
+The default username is:
+
+cognodb
+
+The database password must be stored securely and must never be committed to GitHub.
 
 
-2. BACKEND SETUP
-================
+==================================================
+BACKEND SETUP
+==================================================
 
 Open a terminal:
 
@@ -224,51 +303,59 @@ Create the environment file:
 
 cp .env.example .env
 
-Configure the environment variables:
+Configure the environment:
 
-COGNODB_URI=bolt+s://your-cognodb-instance
+COGNODB_URI=bolt+s://<your-instance>.databases.cognodb.com
 COGNODB_USERNAME=cognodb
-COGNODB_PASSWORD=your_password_here
+COGNODB_PASSWORD=<your-password>
+
 PORT=4000
+
 FRONTEND_URL=http://localhost:3000
 
-
-IMPORTANT:
-
-Do not commit .env to GitHub.
-
-The actual password should only exist in your local .env file
-or in the environment-variable settings of the deployment platform.
+Do not commit the .env file.
 
 
+==================================================
 SEED THE DATABASE
-=================
+==================================================
 
 Run:
 
 npm run seed
 
+The seed script creates:
 
-START THE BACKEND
-=================
+- Movies
+- Actors
+- Directors
+- Genres
+- Studios
+- Relationships between the nodes
+
+The seed data also includes movie poster URLs.
+
+
+==================================================
+START BACKEND
+==================================================
 
 Run:
 
 npm run start:dev
 
-
 The backend will run at:
 
 http://localhost:4000
-
 
 Health check:
 
 http://localhost:4000/health
 
 
-3. FRONTEND SETUP
-=================
+==================================================
+FRONTEND SETUP
+==================================================
 
 Open another terminal:
 
@@ -282,416 +369,536 @@ Create the environment file:
 
 cp .env.example .env.local
 
-Set:
+Configure:
 
 NEXT_PUBLIC_API_URL=http://localhost:4000
-
 
 Start the frontend:
 
 npm run dev
 
-
-Open:
+The frontend will run at:
 
 http://localhost:3000
 
 
-4. PRODUCTION BUILD
-===================
+NOTE:
 
-Frontend:
+The localhost URLs above are only for local development.
 
-cd frontend
-npm run build
+For the final submission, the Live Demo section should contain the deployed application URL.
 
 
-Backend:
-
-cd backend
-npm run build
-
-
-Both projects should complete the production build without
-TypeScript or compilation errors.
-
-
+==================================================
 API ENDPOINTS
-=============
+==================================================
+
+Health:
 
 GET /health
 
-Checks backend/database availability.
 
+Movies:
 
 GET /movies?limit=12
 
-Returns movies for the home/listing page.
 
+Movie Details:
 
 GET /movies/:id
 
-Returns movie details including:
 
-- Movie information
-- Director
-- Genres
-- Studio
-- Poster URL
-
+Movie Actors:
 
 GET /movies/:id/actors
 
-Returns actors connected to the selected movie.
 
+Movie Connections:
 
 GET /movies/:id/connections
 
-Returns graph relationship information.
 
+Recommendations:
 
 GET /movies/:id/recommendations
 
-Returns graph-based movie recommendations.
+
+Search:
+
+GET /search?q=inception&limit=20
 
 
-GET /search?q=dark&limit=20
+==================================================
+MAIN CYPHER QUERIES
+==================================================
 
-Searches the graph for matching movies, actors, directors,
-genres or studios.
+Find a movie:
 
-
-MOVIE POSTERS
-=============
-
-Movie records contain a posterUrl property.
-
-Example:
-
-posterUrl:
-https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg
-
-The frontend uses the MoviePoster component to render poster
-images safely.
-
-Poster URLs are stored as movie properties in CognoDB rather
-than being hard-coded only in the frontend.
-
-This allows movie listings and movie detail pages to use the
-same poster information returned by the API.
+MATCH (m:Movie {id: $movieId})
+RETURN m
 
 
-SEARCH
-======
+Find actors in a movie:
 
-The application provides a search page that can search across
-the graph.
+MATCH (m:Movie {id: $movieId})
+<-[:ACTED_IN]-(a:Actor)
 
-Examples:
-
-Christopher
-
-Inception
-
-Batman
-
-Nolan
-
-Marvel
+RETURN a
+ORDER BY a.name
 
 
-The backend returns the entity type and matching entity.
+==================================================
+MULTI-HOP RECOMMENDATION
+==================================================
 
-Example response:
+One of the main graph queries finds movies that share actors.
 
-[
-  {
-    "type": "Movie",
-    "item": {
-      "id": "inception",
-      "title": "Inception",
-      "releaseYear": 2010
-    }
-  }
-]
+MATCH (m:Movie {id: $movieId})
+<-[:ACTED_IN]-(a:Actor)
+-[:ACTED_IN]->(related:Movie)
 
+WHERE m <> related
 
-GRAPH-BASED RECOMMENDATIONS
-===========================
+RETURN related,
+       COUNT(DISTINCT a) AS sharedActors
 
-Recommendations are not based only on movie metadata.
+ORDER BY sharedActors DESC
 
-The application traverses graph relationships.
-
-Example:
-
-Selected Movie
-      |
-      v
-    Actor
-      |
-      v
- Related Movie
-      |
-      v
-   Genre
+LIMIT 10
 
 
-Movies are ranked using:
+Traversal:
+
+Movie
+  |
+  v
+Actor
+  |
+  v
+Related Movie
+
+
+This is a multi-hop graph traversal and demonstrates how relationships can be used to discover connected movies.
+
+
+==================================================
+ACTOR + GENRE RECOMMENDATION
+==================================================
+
+CineGraph also combines actors and genres.
+
+MATCH (m:Movie {id: $movieId})
+<-[:ACTED_IN]-(a:Actor)
+-[:ACTED_IN]->(related:Movie)
+-[:HAS_GENRE]->(g:Genre)
+<-[:HAS_GENRE]-(m)
+
+WHERE m <> related
+
+RETURN related,
+       COUNT(DISTINCT a) AS sharedActors,
+       COUNT(DISTINCT g) AS sharedGenres
+
+ORDER BY sharedActors DESC, sharedGenres DESC
+
+LIMIT 10
+
+
+This allows recommendations to consider:
 
 - Shared actors
 - Shared genres
 
-This demonstrates a multi-hop graph traversal using CognoDB.
+The traversal is:
+
+Movie
+  |
+  v
+Actor
+  |
+  v
+Movie
+  |
+  v
+Genre
+  ^
+  |
+Movie
 
 
-ENVIRONMENT VARIABLES
-=====================
+==================================================
+PARAMETERISED QUERIES
+==================================================
 
-Backend:
-
-COGNODB_URI
-COGNODB_USERNAME
-COGNODB_PASSWORD
-PORT
-FRONTEND_URL
-
-
-Frontend:
-
-NEXT_PUBLIC_API_URL
-
-
-SECURITY
-========
-
-Never commit:
-
-.env
-.env.local
-
-The .gitignore file excludes environment files.
-
-Only .env.example files should be committed.
+The application uses parameters with the official Neo4j JavaScript driver.
 
 Example:
 
-COGNODB_URI=bolt+s://your-instance
-COGNODB_USERNAME=cognodb
-COGNODB_PASSWORD=your_password_here
+session.run(
+  `
+  MATCH (m:Movie {id: $movieId})
+  RETURN m
+  `,
+  {
+    movieId,
+  },
+);
 
 
-IMPORTANT SECURITY NOTE
-=======================
+User input is not directly concatenated into Cypher queries.
 
-Do not put the real CognoDB password in:
-
-- README.md
-- README.txt
-- seed.ts
-- GitHub
-- frontend source code
-- backend source code
-- screenshots
-- public configuration files
-
-Use environment variables instead.
+This keeps the queries structured and avoids unsafe string-built Cypher.
 
 
-GITIGNORE
-=========
+==================================================
+USER INTERFACE
+==================================================
 
-The repository ignores:
+Home Page:
 
-node_modules/
-dist/
-.next/
-.env
-.env.*
-!.env.example
-coverage/
-*.log
-.DS_Store
+- Movie catalogue
+- Movie posters
+- Ratings
+- Release years
+- Duration
+- Navigation to movie details
 
 
+Search:
+
+Users can search for:
+
+- Movies
+- Actors
+- Directors
+- Other supported graph entities
+
+
+Movie Details:
+
+The movie detail page displays:
+
+- Movie poster
+- Rating
+- Release year
+- Duration
+- Description
+- Director
+- Studio
+- Genres
+- Actors
+
+
+Graph Relationships:
+
+The movie page displays actors connected to the selected movie.
+
+
+Recommendations:
+
+The application displays graph-based movie recommendations using shared actors and genres.
+
+
+==================================================
 ERROR HANDLING
-==============
+==================================================
 
-The backend handles database/API errors and returns safe error
-responses.
+The backend handles database errors and returns safe API responses.
 
 The frontend provides:
 
 - Loading states
 - Empty states
 - Error states
-- Fallback UI for missing poster images
+- Missing relationship handling
+
+If CognoDB is unavailable, the application displays an appropriate error state instead of exposing database credentials or internal database errors.
 
 
-DEMO FLOW
-=========
+==================================================
+ENVIRONMENT VARIABLES
+==================================================
 
-For the assessment screen recording:
+Backend:
 
-1. Open the CineGraph home page.
-
-2. Show the movie listing.
-
-3. Show movie poster images.
-
-4. Search for a movie such as "Inception".
-
-5. Open the Inception movie details page.
-
-6. Show:
-   - Rating
-   - Release year
-   - Duration
-   - Director
-   - Studio
-   - Genres
-   - Poster
-
-7. Scroll to the Cast Connections section.
-
-8. Show the connected actors.
-
-9. Scroll to graph-based recommendations.
-
-10. Explain:
-
-    Movie -> Actor -> Movie
-
-11. Explain that recommendations can also use shared genres.
-
-12. Show the search functionality.
-
-13. Show the GitHub repository.
-
-14. Show the seed.ts file.
-
-15. Show the recommendations.cypher file.
-
-16. Show the README and project architecture.
+COGNODB_URI=
+COGNODB_USERNAME=
+COGNODB_PASSWORD=
+PORT=
+FRONTEND_URL=
 
 
-TESTING BEFORE SUBMISSION
-=========================
+Frontend:
 
-Backend build:
+NEXT_PUBLIC_API_URL=
+
+
+Actual .env and .env.local files are not committed to GitHub.
+
+
+==================================================
+SECURITY
+==================================================
+
+Database credentials are stored only in environment variables.
+
+The following files are ignored:
+
+.env
+.env.*
+!.env.example
+
+The repository contains only .env.example files.
+
+Never put the real CognoDB password in:
+
+- README
+- Source code
+- GitHub
+- Screenshots
+- Screen recordings
+- Frontend environment variables
+
+
+==================================================
+DEPLOYMENT
+==================================================
+
+The application should be deployed as two services:
+
+1. Backend
+2. Frontend
+
+
+Backend environment variables:
+
+COGNODB_URI=<CognoDB Bolt URI>
+COGNODB_USERNAME=cognodb
+COGNODB_PASSWORD=<CognoDB password>
+PORT=<hosting provider port>
+FRONTEND_URL=<deployed frontend URL>
+
+
+Frontend environment variable:
+
+NEXT_PUBLIC_API_URL=<deployed backend URL>
+
+
+The CognoDB instance should remain running while the assignment is being evaluated.
+
+
+==================================================
+LIVE DEMO
+==================================================
+
+Frontend:
+
+
+
+Backend:
+
+
+
+GitHub:
+
+https://github.com/SAMEER-WANKHEDE/cinegraph-cognodb
+
+
+==================================================
+PRODUCTION BUILD VERIFICATION
+==================================================
+
+Backend:
 
 cd backend
 npm run build
 
 
-Frontend build:
+Frontend:
 
 cd frontend
 npm run build
 
 
-Backend health:
-
-curl http://localhost:4000/health
 
 
-Movie API:
-
-curl http://localhost:4000/movies/inception
-
-
-Search API:
-
-curl "http://localhost:4000/search?q=Inception"
+==================================================
+SCREENSHOTS
+==================================================
 
 
-Recommendations:
 
-curl http://localhost:4000/movies/inception/recommendations
+==================================================
+DEMO FLOW
+==================================================
+
+The recommended screen-recording flow is:
+
+1. Open the CineGraph home page.
+
+2. Show the movie catalogue and posters.
+
+3. Search for "Inception".
+
+4. Open the Inception movie page.
+
+5. Show:
+   - Rating
+   - Description
+   - Director
+   - Studio
+   - Genres
+
+6. Show the connected actors.
+
+7. Scroll to graph-based recommendations.
+
+8. Explain the Movie -> Actor -> Movie traversal.
+
+9. Show the search functionality.
+
+10. Briefly show the project architecture.
+
+11. Show the seed script.
+
+12. Show the recommendation Cypher query.
+
+13. Show the GitHub repository.
+
+14. Open the deployed application and demonstrate that it works.
 
 
-GITHUB
-======
+==================================================
+ASSIGNMENT REQUIREMENTS CHECKLIST
+==================================================
 
-Repository:
+Graph database:
+YES - CognoDB
+
+Thoughtful graph data model:
+YES
+
+Nodes:
+Movie, Actor, Director, Genre, Studio
+
+Typed relationships:
+YES
+
+Node properties:
+YES
+
+Realistic seed data:
+YES
+
+Seed script:
+YES
+
+Cypher queries:
+YES
+
+Multi-hop traversal:
+YES
+
+Relationally awkward query:
+YES - graph-based recommendations
+
+Parameterised Cypher:
+YES
+
+Official Neo4j JavaScript driver:
+YES
+
+Functional web application:
+YES
+
+Search:
+YES
+
+Movie relationship exploration:
+YES
+
+Graph recommendations:
+YES
+
+Loading states:
+YES
+
+Empty states:
+YES
+
+Error states:
+YES
+
+Environment-based credentials:
+YES
+
+Graceful database error handling:
+YES
+
+GitHub repository:
+YES
+
+Hosted demo:
+TO BE ADDED
+
+Screen recording:
+TO BE ADDED
+
+Screenshots:
+TO BE ADDED
+
+
+==================================================
+FINAL SUBMISSION
+==================================================
+
+Submit the following to:
+
+hr@wexa.ai
+
+
+Email subject:
+
+CognoDB Assignment 2 – Sameer Wankhede
+
+
+Include:
+
+1. GitHub repository URL
 
 https://github.com/SAMEER-WANKHEDE/cinegraph-cognodb
 
 
-Before submission, verify that:
+2. Hosted application URL
 
-- The repository is public if required by the assignment.
-- .env is NOT present in GitHub.
-- .env.local is NOT present in GitHub.
-- No real password appears anywhere in the repository.
-- README.md is present.
-- Backend source is present.
-- Frontend source is present.
-- Seed file is present.
-- Cypher recommendation queries are present.
-- The application builds successfully.
-- The application can connect to CognoDB.
+<YOUR DEPLOYED FRONTEND URL>
 
 
-DEPLOYMENT
-==========
+3. Screen recording URL
 
-The backend and frontend can be deployed separately.
-
-Backend environment variables:
-
-COGNODB_URI
-COGNODB_USERNAME
-COGNODB_PASSWORD
-FRONTEND_URL
+<YOUR SCREEN RECORDING URL>
 
 
-Frontend environment variable:
+==================================================
+NOTES
+==================================================
 
-NEXT_PUBLIC_API_URL
+CineGraph uses CognoDB as the graph database and the official Neo4j JavaScript driver for database connectivity.
 
+The application demonstrates graph-based relationship exploration rather than treating the movie catalogue as a simple collection of independent records.
 
-The CognoDB instance must remain available while the deployed
-application is being evaluated.
+AI-assisted development tools may have been used during development. The implementation should be fully understood and explainable during the technical interview.
 
+The developer should be able to explain:
 
-FINAL SUBMISSION CHECKLIST
-==========================
-
-[ ] GitHub repository pushed successfully
-
-[ ] README.md updated
-
-[ ] .env excluded from Git
-
-[ ] Real CognoDB password removed from documentation/source
-
-[ ] .env.example contains placeholders only
-
-[ ] Backend builds successfully
-
-[ ] Frontend builds successfully
-
-[ ] CognoDB seed works
-
-[ ] Movie listing works
-
-[ ] Movie posters work
-
-[ ] Search works
-
-[ ] Movie detail page works
-
-[ ] Actor relationships work
-
-[ ] Recommendations work
-
-[ ] Health endpoint works
-
-[ ] No console/build errors
-
-[ ] GitHub repository contains the latest changes
-
-
-END
-===
+- Graph data model
+- Why a graph database was selected
+- Cypher queries
+- Multi-hop traversals
+- Recommendation logic
+- Backend architecture
+- Frontend architecture
+- Environment configuration
+- Error handling
+- Database connectivity
+- Seed process
