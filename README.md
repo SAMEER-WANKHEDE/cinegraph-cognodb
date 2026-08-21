@@ -692,10 +692,7 @@ LIVE DEMO
 ==================================================
 
 Frontend:
-
-
-
-Backend:
+🌐 Application: https://cinegraph-cognodb.vercel.app/
 
 
 
@@ -726,46 +723,15 @@ npm run build
 SCREENSHOTS
 ==================================================
 
+images/connected-movies.png
 
+images/home-page.png
 
-==================================================
-DEMO FLOW
-==================================================
+images/movie-details.png
 
-The recommended screen-recording flow is:
+images/recommendations.png
 
-1. Open the CineGraph home page.
-
-2. Show the movie catalogue and posters.
-
-3. Search for "Inception".
-
-4. Open the Inception movie page.
-
-5. Show:
-   - Rating
-   - Description
-   - Director
-   - Studio
-   - Genres
-
-6. Show the connected actors.
-
-7. Scroll to graph-based recommendations.
-
-8. Explain the Movie -> Actor -> Movie traversal.
-
-9. Show the search functionality.
-
-10. Briefly show the project architecture.
-
-11. Show the seed script.
-
-12. Show the recommendation Cypher query.
-
-13. Show the GitHub repository.
-
-14. Open the deployed application and demonstrate that it works.
+images/search.png
 
 
 ==================================================
@@ -839,66 +805,7 @@ GitHub repository:
 YES
 
 Hosted demo:
-TO BE ADDED
-
-Screen recording:
-TO BE ADDED
+Yes
 
 Screenshots:
-TO BE ADDED
-
-
-==================================================
-FINAL SUBMISSION
-==================================================
-
-Submit the following to:
-
-hr@wexa.ai
-
-
-Email subject:
-
-CognoDB Assignment 2 – Sameer Wankhede
-
-
-Include:
-
-1. GitHub repository URL
-
-https://github.com/SAMEER-WANKHEDE/cinegraph-cognodb
-
-
-2. Hosted application URL
-
-<YOUR DEPLOYED FRONTEND URL>
-
-
-3. Screen recording URL
-
-<YOUR SCREEN RECORDING URL>
-
-
-==================================================
-NOTES
-==================================================
-
-CineGraph uses CognoDB as the graph database and the official Neo4j JavaScript driver for database connectivity.
-
-The application demonstrates graph-based relationship exploration rather than treating the movie catalogue as a simple collection of independent records.
-
-AI-assisted development tools may have been used during development. The implementation should be fully understood and explainable during the technical interview.
-
-The developer should be able to explain:
-
-- Graph data model
-- Why a graph database was selected
-- Cypher queries
-- Multi-hop traversals
-- Recommendation logic
-- Backend architecture
-- Frontend architecture
-- Environment configuration
-- Error handling
-- Database connectivity
-- Seed process
+Yes
