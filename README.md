@@ -733,6 +733,11 @@ images/recommendations.png
 
 images/search.png
 
+==================================================
+SCREEN RECORDING (DEMO VIDEO)
+==================================================
+
+https://drive.google.com/file/d/11wLeFwBv18q2T2ftKFsePeEo49YdQce-/view?usp=sharing
 
 ==================================================
 ASSIGNMENT REQUIREMENTS CHECKLIST
